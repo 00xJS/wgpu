@@ -162,7 +162,8 @@ impl super::Adapter {
         };
 
         // source: Sascha Willems at Vulkan
-        let vendor_id = if vendor.contains("amd") {
+        // AMD's Windows driver reports "ATI Technologies Inc.". A bare "ati" would match "corporation".
+        let vendor_id = if vendor.contains("amd") || vendor.contains("ati technologies") {
             db::amd::VENDOR
         } else if vendor.contains("imgtec") {
             db::imgtec::VENDOR
@@ -1477,5 +1478,14 @@ mod tests {
             Adapter::parse_version("WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)").unwrap(),
             (3, 0)
         );
+    }
+
+    #[test]
+    fn test_vendor_id() {
+        let vendor = |v: &str| Adapter::make_info(v.into(), "".into(), "".into()).vendor;
+        assert_eq!(vendor("ATI Technologies Inc."), 0x1002);
+        assert_eq!(vendor("AMD"), 0x1002);
+        assert_eq!(vendor("NVIDIA Corporation"), 0x10de);
+        assert_eq!(vendor("Intel Corporation"), 0x8086);
     }
 }
